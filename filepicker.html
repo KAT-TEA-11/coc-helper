@@ -206,17 +206,19 @@
         
         if (window.__wxjs_environment === 'miniprogram') {
           wx.miniProgram.postMessage({ data: data });
+          wx.miniProgram.postMessage({ data: data });
+          wx.miniProgram.postMessage({ data: data });
         } else {
           console.log('Not in miniprogram environment');
           console.log(data);
         }
         
-        alert('文件已发送到小程序，请等待页面自动关闭...');
+        alert('文件已发送到小程序！');
         setTimeout(function() {
           if (window.__wxjs_environment === 'miniprogram') {
-            wx.miniProgram.postMessage({ data: { action: 'close' } });
+            wx.miniProgram.navigateBack();
           }
-        }, 500);
+        }, 1500);
         fileInfo.classList.remove('show');
         fileInput.value = '';
         selectedFile = null;
