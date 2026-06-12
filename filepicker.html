@@ -135,6 +135,15 @@
     .error.show {
       display: block;
     }
+    .uploading {
+      color: #666;
+      font-size: 14px;
+      margin-top: 15px;
+      display: none;
+    }
+    .uploading.show {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -149,6 +158,7 @@
     </div>
     
     <div class="error" id="errorMsg">文件格式不支持，请选择音频文件</div>
+    <div class="uploading" id="uploadingMsg">正在处理文件，请稍候...</div>
     
     <div class="file-info" id="fileInfo">
       <div class="file-name" id="fileName"></div>
@@ -158,6 +168,7 @@
     </div>
   </div>
 
+  <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
   <script>
     const fileInput = document.getElementById('fileInput');
     const fileInfo = document.getElementById('fileInfo');
@@ -166,6 +177,7 @@
     const confirmBtn = document.getElementById('confirmBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const errorMsg = document.getElementById('errorMsg');
+    const uploadingMsg = document.getElementById('uploadingMsg');
     
     let selectedFile = null;
     
@@ -195,37 +207,49 @@
     confirmBtn.addEventListener('click', function() {
       if (!selectedFile) return;
       
+      uploadingMsg.classList.add('show');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = '处理中...';
+      
       const reader = new FileReader();
       reader.onload = function(e) {
-        const data = {
+        const base64 = e.target.result;
+        const base64Data = base64.split(',')[1];
+        
+        const fileData = {
           name: selectedFile.name,
           size: selectedFile.size,
           type: selectedFile.type,
-          base64: e.target.result
+          base64: base64Data
         };
         
-        if (window.__wxjs_environment === 'miniprogram') {
-          wx.miniProgram.postMessage({ data: data });
-          wx.miniProgram.postMessage({ data: data });
-          wx.miniProgram.postMessage({ data: data });
-        } else {
-          console.log('Not in miniprogram environment');
-          console.log(data);
-        }
-        
-        alert('文件已发送到小程序！');
-        setTimeout(function() {
-          if (window.__wxjs_environment === 'miniprogram') {
+        if (window.wx && window.wx.miniProgram) {
+          // 在小程序环境中，发送 postMessage
+          wx.miniProgram.postMessage({ data: fileData });
+          
+          // 延迟返回
+          setTimeout(function() {
             wx.miniProgram.navigateBack();
-          }
-        }, 1500);
-        fileInfo.classList.remove('show');
-        fileInput.value = '';
-        selectedFile = null;
+          }, 300);
+        } else {
+          console.log('文件数据:', fileData);
+          alert('文件已准备好（非小程序环境）');
+          uploadingMsg.classList.remove('show');
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = '确认选择';
+        }
       };
+      
+      reader.onerror = function() {
+        alert('读取文件失败');
+        uploadingMsg.classList.remove('show');
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '确认选择';
+      };
+      
       reader.readAsDataURL(selectedFile);
     });
-
+    
     cancelBtn.addEventListener('click', function() {
       fileInfo.classList.remove('show');
       fileInput.value = '';
