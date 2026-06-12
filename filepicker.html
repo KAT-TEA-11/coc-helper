@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>选择音乐文件</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .hint {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+    .file-input-wrapper input[type=file] {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 100%;
+      min-height: 100%;
+      font-size: 100px;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-btn {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-block;
+    }
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(238, 90, 90, 0.4);
+    }
+    .upload-btn:active {
+      transform: translateY(0);
+    }
+    .file-info {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      display: none;
+    }
+    .file-info.show {
+      display: block;
+    }
+    .file-name {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+    .file-size {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .confirm-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .confirm-btn:hover {
+      transform: translateY(-2px);
+    }
+    .cancel-btn {
+      background: #f0f0f0;
+      color: #666;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-size: 16px;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .cancel-btn:hover {
+      background: #e0e0e0;
+    }
+    .error {
+      color: #dc3545;
+      font-size: 14px;
+      margin-top: 15px;
+      display: none;
+    }
+    .error.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🎵</div>
+    <h1>选择音乐文件</h1>
+    <p class="hint">支持 MP3、AAC、M4A、WAV 格式</p>
+    
+    <div class="file-input-wrapper">
+      <button class="upload-btn">📁 浏览文件</button>
+      <input type="file" accept="audio/mp3,audio/aac,audio/m4a,audio/wav,audio/*" id="fileInput" />
+    </div>
+    
+    <div class="error" id="errorMsg">文件格式不支持，请选择音频文件</div>
+    
+    <div class="file-info" id="fileInfo">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-size" id="fileSize"></div>
+      <button class="confirm-btn" id="confirmBtn">确认选择</button>
+      <button class="cancel-btn" id="cancelBtn">重新选择</button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    
+    let selectedFile = null;
+    
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const validTypes = ['audio/mp3', 'audio/aac', 'audio/m4a', 'audio/wav', 'audio/mpeg', 'audio/x-wav'];
+      const isValidType = validTypes.includes(file.type) || file.name.match(/\.(mp3|aac|m4a|wav)$/i);
+      
+      if (!isValidType) {
+        errorMsg.classList.add('show');
+        fileInfo.classList.remove('show');
+        selectedFile = null;
+        return;
+      }
+      
+      errorMsg.classList.remove('show');
+      selectedFile = file;
+      
+      fileName.textContent = file.name;
+      const size = (file.size / (1024 * 1024)).toFixed(2);
+      fileSize.textContent = `文件大小: ${size} MB`;
+      fileInfo.classList.add('show');
+    });
+    
+    confirmBtn.addEventListener('click', function() {
+      if (!selectedFile) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = {
+          name: selectedFile.name,
+          size: selectedFile.size,
+          type: selectedFile.type,
+          base64: e.target.result
+        };
+        
+        if (window.__wxjs_environment === 'miniprogram') {
+          wx.miniProgram.postMessage({ data: data });
+        } else {
+          console.log('Not in miniprogram environment');
+          console.log(data);
+        }
+        
+        alert('文件已发送到小程序，请等待页面自动关闭...');
+        setTimeout(function() {
+          if (window.__wxjs_environment === 'miniprogram') {
+            wx.miniProgram.postMessage({ data: { action: 'close' } });
+          }
+        }, 500);
+        fileInfo.classList.remove('show');
+        fileInput.value = '';
+        selectedFile = null;
+      };
+      reader.readAsDataURL(selectedFile);
+    });
+    
+    cancelBtn.addEventListener('click', function() {
+      fileInfo.classList.remove('show');
+      fileInput.value = '';
+      selectedFile = null;
+    });
+  </script>
+</body>
+</html>
